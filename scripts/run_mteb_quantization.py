@@ -53,7 +53,11 @@ model = SentenceTransformer(model_name, trust_remote_code=True, device='cuda:0')
 
 old_model_encode = model.encode
 
-batch_size_map = {'CQADupstackAndroidRetrieval': 1}
+batch_size_map = {'CQADupstackAndroidRetrieval': 1,
+                  'CQADupstackEnglishRetrieval': 1,
+                  'CQADupstackGisRetrieval': 1, 'CQADupstackMathematicaRetrieval': 1, 'CQADupstackPhysicsRetrieval': 1,
+                  'CQADupstackProgrammersRetrieval': 1, 'CQADupstackStatsRetrieval': 1, 'CQADupstackTexRetrieval': 1,
+                  'CQADupstackUnixRetrieval': 1, 'CQADupstackWebmastersRetrieval': 1, 'CQADupstackWordpressRetrieval': 1}
 QUANT_FUNTION = {'ubinary': 'hamming', 'int8': 'cos_sim'}
 
 for task in TASK_LIST:
