@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers.models import Transformer, WordEmbeddings
 
 from .Evaluator import Evaluator
-from .utils import cos_sim, dot_score, hole, mrr, recall_cap, top_k_accuracy, hamming
+from .utils import cos_sim, dot_score, hole, mrr, recall_cap, top_k_accuracy
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +23,10 @@ class DenseRetrievalExactSearch:
         # Model is class that provides encode_corpus() and encode_queries()
         self.model = model
         self.batch_size = batch_size
-        self.score_functions = {"cos_sim": cos_sim, "dot": dot_score, "hamming": hamming}
+        self.score_functions = {"cos_sim": cos_sim, "dot": dot_score}
         self.score_function_desc = {
             "cos_sim": "Cosine Similarity",
             "dot": "Dot Product",
-            "hamming": "Hamming distance"
         }
         self.corpus_chunk_size = corpus_chunk_size
         self.show_progress_bar = kwargs.get("show_progress_bar", True)

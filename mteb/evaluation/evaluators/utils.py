@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Tuple
 
-import numpy as np
 import torch
 
 def cos_sim(a, b):
