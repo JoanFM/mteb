@@ -43,13 +43,13 @@ def cos_sim(a, b):
     :return: Matrix with res[i][j]  = cos_sim(a[i], b[j])
     """
     if not isinstance(a, torch.Tensor):
-        a = torch.tensor(a).astype('float')
+        a = torch.tensor(a)
 
     if not isinstance(b, torch.Tensor):
-        b = torch.tensor(b).astype('float')
+        b = torch.tensor(b)
 
-    a = a.astype('float')
-    b = b.astype('float')
+    a = a.type(torch.FloatTensor)
+    b = b.type(torch.FloatTensor)
     
     if len(a.shape) == 1:
         a = a.unsqueeze(0)
