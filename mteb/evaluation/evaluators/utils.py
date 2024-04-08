@@ -6,6 +6,26 @@ from typing import Dict, List, Tuple
 import torch
 
 
+def hamming(a, b):
+    """
+    Computes the cosine hamming distance hamming(a[i], b[j]) for all i and j.
+    :return: Matrix with res[i][j]  = hamming(a[i], b[j])
+    """
+    if not isinstance(a, torch.Tensor):
+        a = torch.tensor(a)
+
+    if not isinstance(b, torch.Tensor):
+        b = torch.tensor(b)
+
+    if len(a.shape) == 1:
+        a = a.unsqueeze(0)
+
+    if len(b.shape) == 1:
+        b = b.unsqueeze(0)
+
+    return torch.cdist(a, b, p=0)
+
+
 def cos_sim(a, b):
     """
     Computes the cosine similarity cos_sim(a[i], b[j]) for all i and j.
