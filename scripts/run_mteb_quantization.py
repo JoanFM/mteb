@@ -69,7 +69,7 @@ for task in TASK_LIST:
             model.encode_queries = functools.partial(old_model_encode_queries, precision=quant)
             model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
         else:
-            model.encode_queries = functools.partial(old_model_encode_queries, precision='float')
+            model.encode_queries = functools.partial(old_model_encode_queries, precision='float32')
             model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
         eval_splits = ["dev"] if task == "MSMARCO" else ["test"]
         evaluation = MTEB(
