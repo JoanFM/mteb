@@ -48,6 +48,9 @@ def cos_sim(a, b):
     if not isinstance(b, torch.Tensor):
         b = torch.tensor(b)
 
+    a = a.astype('float')
+    b = b.astype('float')
+    
     if len(a.shape) == 1:
         a = a.unsqueeze(0)
 
