@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import logging
 import functools
-import numpy as np
-from torch import Tensor
 from sentence_transformers import SentenceTransformer
 
 from mteb import MTEB
+from mteb.evaluation.evaluators.RetrievalEvaluator import DRESModel
 
 logging.basicConfig(level=logging.INFO)
 
@@ -49,9 +48,10 @@ QUANTIZATION = ['ubinary', 'int8']
 TASK_LIST = TASK_LIST_RETRIEVAL
 
 model_name = "jinaai/jina-embeddings-v2-base-en"
-model = SentenceTransformer(model_name, trust_remote_code=True, device='cuda:0')
+model = DRESModel(SentenceTransformer(model_name, trust_remote_code=True, device='cuda:0'))
 
-old_model_encode = model.encode
+old_model_encode_queries = model.encode_queries
+old_model_encode_corpus = model.encode_corpus
 
 batch_size_map = {'CQADupstackAndroidRetrieval': 1,
                   'CQADupstackEnglishRetrieval': 1,
@@ -59,13 +59,18 @@ batch_size_map = {'CQADupstackAndroidRetrieval': 1,
                   'CQADupstackGisRetrieval': 1, 'CQADupstackMathematicaRetrieval': 1, 'CQADupstackPhysicsRetrieval': 1,
                   'CQADupstackProgrammersRetrieval': 1, 'CQADupstackStatsRetrieval': 1, 'CQADupstackTexRetrieval': 1,
                   'CQADupstackUnixRetrieval': 1, 'CQADupstackWebmastersRetrieval': 1, 'CQADupstackWordpressRetrieval': 1}
-QUANT_FUNTION = {'ubinary': 'hamming', 'int8': 'cos_sim'}
+QUANT_FUNTION = {'ubinary': 'dot', 'int8': 'cos_sim'}
 
 for task in TASK_LIST:
     for quant in QUANTIZATION:
         logger.info(f"Running task: {task} with quantization: {quant}")
         # normalize_embeddings should be true for this model
-        model.encode = functools.partial(old_model_encode, precision=quant)
+        if quant == 'int8':
+            model.encode_queries = functools.partial(old_model_encode_queries, precision=quant)
+            model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
+        else:
+            model.encode_queries = functools.partial(old_model_encode_queries, precision='float')
+            model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
         eval_splits = ["dev"] if task == "MSMARCO" else ["test"]
         evaluation = MTEB(
             tasks=[task], task_langs=["en"]
