@@ -53,6 +53,7 @@ model = SentenceTransformer(model_name, trust_remote_code=True, device='cuda:0')
 
 old_model_encode = model.encode
 
+batch_size_map = {'CQADupstackAndroidRetrieval': 1}
 QUANT_FUNTION = {'ubinary': 'hamming', 'int8': 'cos_sim'}
 
 for task in TASK_LIST:
@@ -66,6 +67,6 @@ for task in TASK_LIST:
         )  # Remove "en" for running all languages
         evaluation.run(
             model, output_folder=f"results/{quant}/{model_name}", eval_splits=eval_splits,
-            score_function=QUANT_FUNTION[quant], batch_size=16
+            score_function=QUANT_FUNTION[quant], batch_size=batch_size_map.get(task, 16)
         )
 
