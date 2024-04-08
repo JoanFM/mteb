@@ -44,17 +44,16 @@ TASK_LIST_RETRIEVAL = [
     "TRECCOVID",
 ]
 
-QUANTIZATION = ['binary', 'int8']
+QUANTIZATION = ['ubinary', 'int8']
 
 TASK_LIST = TASK_LIST_RETRIEVAL
-
 
 model_name = "jinaai/jina-embeddings-v2-base-en"
 model = SentenceTransformer(model_name, trust_remote_code=True, device='cuda:0')
 
 old_model_encode = model.encode
 
-QUANT_FUNTION = {'binary': 'hamming', 'int8': 'cos_sim'}
+QUANT_FUNTION = {'ubinary': 'hamming', 'int8': 'cos_sim'}
 
 for task in TASK_LIST:
     for quant in QUANTIZATION:
@@ -69,3 +68,4 @@ for task in TASK_LIST:
             model, output_folder=f"results/{quant}/{model_name}", eval_splits=eval_splits,
             score_function=QUANT_FUNTION[quant], batch_size=16
         )
+
