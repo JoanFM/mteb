@@ -55,6 +55,7 @@ old_model_encode = model.encode
 
 batch_size_map = {'CQADupstackAndroidRetrieval': 1,
                   'CQADupstackEnglishRetrieval': 1,
+                  'CQADupstackGamingRetrieval': 1,
                   'CQADupstackGisRetrieval': 1, 'CQADupstackMathematicaRetrieval': 1, 'CQADupstackPhysicsRetrieval': 1,
                   'CQADupstackProgrammersRetrieval': 1, 'CQADupstackStatsRetrieval': 1, 'CQADupstackTexRetrieval': 1,
                   'CQADupstackUnixRetrieval': 1, 'CQADupstackWebmastersRetrieval': 1, 'CQADupstackWordpressRetrieval': 1}
