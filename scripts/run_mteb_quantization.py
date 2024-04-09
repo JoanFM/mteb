@@ -77,6 +77,6 @@ for task in TASK_LIST:
         )  # Remove "en" for running all languages
         evaluation.run(
             model, output_folder=f"results/{quant}/{model_name}", eval_splits=eval_splits,
-            score_function=QUANT_FUNTION[quant], batch_size=batch_size_map.get(task, 16), convert_to_tensor=False
+            score_function=QUANT_FUNTION[quant], batch_size=batch_size_map.get(task, 1), convert_to_tensor=False
         )
 
