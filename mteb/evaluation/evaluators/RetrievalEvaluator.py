@@ -161,7 +161,9 @@ class DenseRetrievalExactSearch:
         for qid in result_heaps:
             for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
                 if i < 100:
-                    self.results[qid][corpus_id] = float_score
+                    self.results[qid][corpus_id] = score
+                else:
+                    self.results[qid][corpus_id] = score
 
         return self.results
 
