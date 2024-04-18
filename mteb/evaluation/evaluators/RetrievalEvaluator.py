@@ -130,6 +130,7 @@ class DenseRetrievalExactSearch:
             # print(f'cos_scores_top_k_values {cos_scores_top_k_values}')
             # print(f'cos_scores_top_k_idx {cos_scores_top_k_idx[0]}')
             # Get top-k values of float-binary-comparison
+            cos_float_scores = cos_float_scores.cpu().tolist()
             # cos_float_scores_top_k_values, cos_float_scores_top_k_idx = torch.topk(
             #     cos_float_scores,
             #     min(top_k + 1, len(cos_float_scores[1])),
@@ -158,21 +159,12 @@ class DenseRetrievalExactSearch:
                             )
 
         # Here do reranking with `float`
-        a = True
         for qid in result_heaps:
-            scores = []
-            float_scores = []
             for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
-                scores.append(score)
-                float_scores.append(float_score)
                 if i < 100:
-                    self.results[qid][corpus_id] = score
+                    self.results[qid][corpus_id] = float_score
                 else:
-                    self.results[qid][corpus_id] = score
-            if a:
-                print(f'scores {scores}')
-                print(f'float_scores {float_scores}')
-            a = False
+                    self.results[qid][corpus_id] = 0.0
         return self.results
 
 
