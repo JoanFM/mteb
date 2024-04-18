@@ -52,7 +52,7 @@ class DenseRetrievalExactSearch:
                 )
             )
 
-        logger.info("Encoding Queries...")
+        logger.info(f"Searching for top_k {top_k}. Encoding Queries...")
         query_ids = list(queries.keys())
         self.results = {qid: {} for qid in query_ids}
         queries = [queries[qid] for qid in queries]
@@ -118,7 +118,6 @@ class DenseRetrievalExactSearch:
             cos_float_scores[torch.isnan(cos_scores)] = -1
 
             # Get top-k values
-            print(f'return_sorted {return_sorted}')
             cos_scores_top_k_values, cos_scores_top_k_idx = torch.topk(
                 cos_scores,
                 min(top_k + 1, len(cos_scores[1])),
@@ -128,24 +127,25 @@ class DenseRetrievalExactSearch:
             )
             cos_scores_top_k_values = cos_scores_top_k_values.cpu().tolist()
             cos_scores_top_k_idx = cos_scores_top_k_idx.cpu().tolist()
-            print(f'cos_scores_top_k_values {cos_scores_top_k_values[0]}')
-            print(f'cos_scores_top_k_idx {cos_scores_top_k_idx[0]}')
+            # print(f'cos_scores_top_k_values {cos_scores_top_k_values}')
+            # print(f'cos_scores_top_k_idx {cos_scores_top_k_idx[0]}')
             # Get top-k values of float-binary-comparison
-            cos_float_scores_top_k_values, _ = torch.topk(
-                cos_float_scores,
-                min(top_k + 1, len(cos_float_scores[1])),
-                dim=1,
-                largest=True,
-                sorted=False,
-            )
-            cos_float_scores_top_k_values = cos_float_scores_top_k_values.cpu().tolist()
+            # cos_float_scores_top_k_values, cos_float_scores_top_k_idx = torch.topk(
+            #     cos_float_scores,
+            #     min(top_k + 1, len(cos_float_scores[1])),
+            #     dim=1,
+            #     largest=True,
+            #     sorted=False,
+            # )
+            # cos_float_scores_top_k_values = cos_float_scores_top_k_values.cpu().tolist()
+            # cos_float_scores_top_k_idx = cos_float_scores_top_k_idx.cpu().tolist()
 
             for query_itr in range(len(query_embeddings)):
                 query_id = query_ids[query_itr]
                 for i, (sub_corpus_id, score) in enumerate(zip(
                     cos_scores_top_k_idx[query_itr], cos_scores_top_k_values[query_itr]
                 )):
-                    float_score = cos_float_scores_top_k_values[query_itr][i]
+                    float_score = cos_float_scores[query_itr][i]
                     corpus_id = corpus_ids[corpus_start_idx + sub_corpus_id]
                     if corpus_id != query_id:
                         if len(result_heaps[query_id]) < top_k:
@@ -160,11 +160,10 @@ class DenseRetrievalExactSearch:
         # Here do reranking with `float`
         for qid in result_heaps:
             for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
-                print(f'SCORE {score} vs float_score {float_score}')
                 if i < 100:
-                    self.results[qid][corpus_id] = score
+                    self.results[qid][corpus_id] = float_score
                 else:
-                    self.results[qid][corpus_id] = score # I do not care about these.
+                    self.results[qid][corpus_id] = 0 # I do not care about these.
 
         return self.results
 
