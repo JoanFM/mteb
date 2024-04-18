@@ -123,7 +123,7 @@ class DenseRetrievalExactSearch:
                 min(top_k + 1, len(cos_scores[1])),
                 dim=1,
                 largest=True,
-                sorted=False,
+                sorted=return_sorted,
             )
             cos_scores_top_k_values = cos_scores_top_k_values.cpu().tolist()
             cos_scores_top_k_idx = cos_scores_top_k_idx.cpu().tolist()
