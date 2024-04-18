@@ -107,7 +107,7 @@ class DenseRetrievalExactSearch:
             )
 
             # Compute similarites using either cosine-similarity or dot product
-            cos_scores = dot_score_float_binary(
+            cos_scores = dot_score_binary_binary(
                 query_float_embeddings, sub_corpus_embeddings
             )
             cos_scores[torch.isnan(cos_scores)] = -1
@@ -118,6 +118,7 @@ class DenseRetrievalExactSearch:
             cos_float_scores[torch.isnan(cos_scores)] = -1
 
             # Get top-k values
+            print(f'return_sorted {return_sorted}')
             cos_scores_top_k_values, cos_scores_top_k_idx = torch.topk(
                 cos_scores,
                 min(top_k + 1, len(cos_scores[1])),
