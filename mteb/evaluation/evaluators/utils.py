@@ -50,7 +50,7 @@ def cos_sim(a, b):
 
     a = a.type(torch.FloatTensor)
     b = b.type(torch.FloatTensor)
-    
+
     if len(a.shape) == 1:
         a = a.unsqueeze(0)
 
@@ -62,7 +62,37 @@ def cos_sim(a, b):
     return torch.mm(a_norm, b_norm.transpose(0, 1))
 
 
-def dot_score(a: torch.Tensor, b: torch.Tensor):
+def dot_score_binary_binary(a: torch.Tensor, b: torch.Tensor):
+    """
+    Computes the dot-product dot_prod(a[i], b[j]) for all i and j.
+    :return: Matrix with res[i][j]  = dot_prod(a[i], b[j])
+    """
+    if not isinstance(a, torch.Tensor):
+        a = np.unpackbits(a, axis=1).astype(np.float32)
+        a = torch.tensor(a)
+    else:
+        a = b.cpu().numpy()
+        a = np.unpackbits(a, axis=1).astype(np.float32)
+        a = torch.tensor(a)
+
+    if not isinstance(b, torch.Tensor):
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+    else:
+        b = b.cpu().numpy()
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+
+    if len(a.shape) == 1:
+        a = a.unsqueeze(0)
+
+    if len(b.shape) == 1:
+        b = b.unsqueeze(0)
+
+    return torch.mm(a, b.transpose(0, 1))
+
+
+def dot_score_float_binary(a: torch.Tensor, b: torch.Tensor):
     """
     Computes the dot-product dot_prod(a[i], b[j]) for all i and j.
     :return: Matrix with res[i][j]  = dot_prod(a[i], b[j])
@@ -86,6 +116,7 @@ def dot_score(a: torch.Tensor, b: torch.Tensor):
 
     return torch.mm(a, b.transpose(0, 1))
 
+dot_score = dot_score_float_binary
 
 # From https://github.com/beir-cellar/beir/blob/f062f038c4bfd19a8ca942a9910b1e0d218759d4/beir/retrieval/custom_metrics.py#L4
 def mrr(

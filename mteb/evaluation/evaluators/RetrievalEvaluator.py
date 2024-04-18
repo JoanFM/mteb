@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers.models import Transformer, WordEmbeddings
 
 from .Evaluator import Evaluator
-from .utils import cos_sim, dot_score, hole, mrr, recall_cap, top_k_accuracy
+from .utils import cos_sim, dot_score_binary_binary, dot_score_float_binary, hole, mrr, recall_cap, top_k_accuracy
 
 logger = logging.getLogger(__name__)
 
@@ -107,12 +107,12 @@ class DenseRetrievalExactSearch:
             )
 
             # Compute similarites using either cosine-similarity or dot product
-            cos_scores = self.score_functions[score_function](
+            cos_scores = dot_score_binary_binary(
                 query_embeddings, sub_corpus_embeddings
             )
             cos_scores[torch.isnan(cos_scores)] = -1
 
-            cos_float_scores = self.score_functions[score_function](
+            cos_float_scores = dot_score_float_binary(
                 query_float_embeddings, sub_corpus_embeddings
             )
             cos_float_scores[torch.isnan(cos_scores)] = -1
