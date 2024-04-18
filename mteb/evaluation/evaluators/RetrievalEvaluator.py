@@ -162,7 +162,7 @@ class DenseRetrievalExactSearch:
         # Here do reranking with `float`
         for qid in result_heaps:
             for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
-                self.results[qid][corpus_id] = score
+                self.results[qid][corpus_id] = float_score
         return self.results
 
 
