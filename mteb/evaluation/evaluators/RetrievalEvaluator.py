@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers.models import Transformer, WordEmbeddings
 
 from .Evaluator import Evaluator
-from .utils import cos_sim, dot_score_binary_binary, dot_score_float_binary, hole, mrr, recall_cap, top_k_accuracy
+from .utils import cos_sim, dot_score, dot_score_binary_binary, dot_score_float_binary, hole, mrr, recall_cap, top_k_accuracy
 
 logger = logging.getLogger(__name__)
 
