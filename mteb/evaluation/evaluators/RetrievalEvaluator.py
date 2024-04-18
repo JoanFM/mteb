@@ -128,7 +128,8 @@ class DenseRetrievalExactSearch:
             )
             cos_scores_top_k_values = cos_scores_top_k_values.cpu().tolist()
             cos_scores_top_k_idx = cos_scores_top_k_idx.cpu().tolist()
-
+            print(f'cos_scores_top_k_values {cos_scores_top_k_values}')
+            print(f'cos_scores_top_k_idx {cos_scores_top_k_idx}')
             # Get top-k values of float-binary-comparison
             cos_float_scores_top_k_values, _ = torch.topk(
                 cos_float_scores,
