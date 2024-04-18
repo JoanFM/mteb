@@ -159,6 +159,7 @@ class DenseRetrievalExactSearch:
         # Here do reranking with `float`
         for qid in result_heaps:
             for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
+                print(f'SCORE {score} vs float_score {float_score}')
                 if i < 100:
                     self.results[qid][corpus_id] = score
                 else:
