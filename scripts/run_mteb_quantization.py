@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import functools
 from sentence_transformers import SentenceTransformer
 
 from mteb import MTEB
@@ -42,7 +41,7 @@ TASK_LIST_RETRIEVAL = [
     "TRECCOVID",
 ]
 
-QUANTIZATION = ['ubinary', 'int8']
+QUANTIZATION = ['ubinary']
 
 TASK_LIST = TASK_LIST_RETRIEVAL
 
@@ -52,9 +51,9 @@ model_name_es = "jinaai/jina-embeddings-v2-base-es"
 model_name_zh = "jinaai/jina-embeddings-v2-base-zh"
 model_name_code = "jinaai/jina-embeddings-v2-base-code"
 
-batch_size_map = {'CQADupstackAndroidRetrieval': 1,
-                  'CQADupstackEnglishRetrieval': 1,
-                  'CQADupstackGamingRetrieval': 1,
+batch_size_map = {'ArguAna': 16,
+                  'DBPedia': 1,
+                  'FiQA2018': 1,
                   'CQADupstackGisRetrieval': 1, 'CQADupstackMathematicaRetrieval': 1, 'CQADupstackPhysicsRetrieval': 1,
                   'CQADupstackProgrammersRetrieval': 1, 'CQADupstackStatsRetrieval': 1, 'CQADupstackTexRetrieval': 1,
                   'CQADupstackUnixRetrieval': 1, 'CQADupstackWebmastersRetrieval': 1,
@@ -74,17 +73,17 @@ for model_name in models:
         for quant in QUANTIZATION:
             logger.info(f"Running task: {task} with quantization: {quant}")
             # normalize_embeddings should be true for this model
-            if quant == 'int8':
-                model.encode_queries = functools.partial(old_model_encode_queries, precision=quant)
-                model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
-            else:
-                model.encode_queries = functools.partial(old_model_encode_queries, precision='float32')
-                model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
+            # if quant == 'int8':
+            #     model.encode_queries = functools.partial(old_model_encode_queries, precision=quant)
+            #     model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
+            # else:
+            #     model.encode_queries = functools.partial(old_model_encode_queries, precision='float32')
+            #     model.encode_corpus = functools.partial(old_model_encode_corpus, precision=quant)
             eval_splits = ["dev"] if task == "MSMARCO" else ["test"]
             evaluation = MTEB(
                 tasks=[task], task_langs=["en"]
             )  # Remove "en" for running all languages
             evaluation.run(
-                model, output_folder=f"results/{quant}/{model_name}", eval_splits=eval_splits,
+                model, output_folder=f"results/{quant}-rerank/{model_name}", eval_splits=eval_splits,
                 score_function=QUANT_FUNTION[quant], batch_size=batch_size_map.get(task, 1), convert_to_tensor=False
             )
