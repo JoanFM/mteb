@@ -144,10 +144,10 @@ class DenseRetrievalExactSearch:
 
             for query_itr in range(len(query_embeddings)):
                 query_id = query_ids[query_itr]
-                for i, (sub_corpus_id, score) in enumerate(zip(
+                for sub_corpus_id, score in zip(
                     cos_scores_top_k_idx[query_itr], cos_scores_top_k_values[query_itr]
-                )):
-                    float_score = cos_float_scores[query_itr][i]
+                ):
+                    float_score = cos_float_scores[query_itr][sub_corpus_id]
                     corpus_id = corpus_ids[corpus_start_idx + sub_corpus_id]
                     if corpus_id != query_id:
                         if len(result_heaps[query_id]) < top_k:
