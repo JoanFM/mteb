@@ -69,7 +69,7 @@ class DenseRetrievalExactSearch:
             batch_size=self.batch_size,
             show_progress_bar=self.show_progress_bar,
             convert_to_tensor=self.convert_to_tensor,
-            precision='float'
+            precision='float32'
         )
 
         logger.info("Sorting Corpus by document length (Longest first)...")
@@ -123,7 +123,7 @@ class DenseRetrievalExactSearch:
                 min(top_k + 1, len(cos_scores[1])),
                 dim=1,
                 largest=True,
-                sorted=return_sorted,
+                sorted=False,
             )
             cos_scores_top_k_values = cos_scores_top_k_values.cpu().tolist()
             cos_scores_top_k_idx = cos_scores_top_k_idx.cpu().tolist()
@@ -140,10 +140,10 @@ class DenseRetrievalExactSearch:
 
             for query_itr in range(len(query_embeddings)):
                 query_id = query_ids[query_itr]
-                for sub_corpus_id, score in zip(
+                for i, (sub_corpus_id, score) in enumerate(zip(
                     cos_scores_top_k_idx[query_itr], cos_scores_top_k_values[query_itr]
-                ):
-                    float_score = cos_float_scores_top_k_values[query_itr]
+                )):
+                    float_score = cos_float_scores_top_k_values[query_itr][i]
                     corpus_id = corpus_ids[corpus_start_idx + sub_corpus_id]
                     if corpus_id != query_id:
                         if len(result_heaps[query_id]) < top_k:
