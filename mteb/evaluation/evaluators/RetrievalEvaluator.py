@@ -108,7 +108,7 @@ class DenseRetrievalExactSearch:
 
             # Compute similarites using either cosine-similarity or dot product
             cos_scores = dot_score_binary_binary(
-                query_float_embeddings, sub_corpus_embeddings
+                query_embeddings, sub_corpus_embeddings
             )
             cos_scores[torch.isnan(cos_scores)] = -1
 
