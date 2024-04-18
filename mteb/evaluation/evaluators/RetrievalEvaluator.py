@@ -162,8 +162,6 @@ class DenseRetrievalExactSearch:
             for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
                 if i < 100:
                     self.results[qid][corpus_id] = float_score
-                else:
-                    self.results[qid][corpus_id] = 0.0 # I do not care about these.
 
         return self.results
 
@@ -290,7 +288,7 @@ class RetrievalEvaluator(Evaluator):
         _map = {}
         recall = {}
         precision = {}
-
+        k_values = [10]
         for k in k_values:
             ndcg[f"NDCG@{k}"] = 0.0
             _map[f"MAP@{k}"] = 0.0
