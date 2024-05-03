@@ -3,7 +3,38 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
+
+
+def hamming(a, b):
+    """
+    Computes the cosine hamming distance hamming(a[i], b[j]) for all i and j.
+    :return: Matrix with res[i][j]  = hamming(a[i], b[j])
+    """
+    if not isinstance(a, torch.Tensor):
+        a = np.unpackbits(a, axis=1).astype(np.float32)
+        a = torch.tensor(a)
+    else:
+        a = a.cpu().numpy()
+        a = np.unpackbits(a, axis=1).astype(np.float32)
+        a = torch.tensor(a)
+
+    if not isinstance(b, torch.Tensor):
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+    else:
+        b = b.cpu().numpy()
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+
+    if len(a.shape) == 1:
+        a = a.unsqueeze(0)
+
+    if len(b.shape) == 1:
+        b = b.unsqueeze(0)
+
+    return torch.cdist(a, b, p=0)
 
 
 def cos_sim(a, b):
@@ -17,6 +48,9 @@ def cos_sim(a, b):
     if not isinstance(b, torch.Tensor):
         b = torch.tensor(b)
 
+    a = a.type(torch.FloatTensor)
+    b = b.type(torch.FloatTensor)
+
     if len(a.shape) == 1:
         a = a.unsqueeze(0)
 
@@ -28,15 +62,25 @@ def cos_sim(a, b):
     return torch.mm(a_norm, b_norm.transpose(0, 1))
 
 
-def dot_score(a: torch.Tensor, b: torch.Tensor):
+def dot_score_binary_binary(a: torch.Tensor, b: torch.Tensor):
     """
     Computes the dot-product dot_prod(a[i], b[j]) for all i and j.
     :return: Matrix with res[i][j]  = dot_prod(a[i], b[j])
     """
     if not isinstance(a, torch.Tensor):
+        a = np.unpackbits(a, axis=1).astype(np.float32)
+        a = torch.tensor(a)
+    else:
+        a = b.cpu().numpy()
+        a = np.unpackbits(a, axis=1).astype(np.float32)
         a = torch.tensor(a)
 
     if not isinstance(b, torch.Tensor):
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+    else:
+        b = b.cpu().numpy()
+        b = np.unpackbits(b, axis=1).astype(np.float32)
         b = torch.tensor(b)
 
     if len(a.shape) == 1:
@@ -48,11 +92,37 @@ def dot_score(a: torch.Tensor, b: torch.Tensor):
     return torch.mm(a, b.transpose(0, 1))
 
 
+def dot_score_float_binary(a: torch.Tensor, b: torch.Tensor):
+    """
+    Computes the dot-product dot_prod(a[i], b[j]) for all i and j.
+    :return: Matrix with res[i][j]  = dot_prod(a[i], b[j])
+    """
+    if not isinstance(a, torch.Tensor):
+        a = torch.tensor(a)
+
+    if not isinstance(b, torch.Tensor):
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+    else:
+        b = b.cpu().numpy()
+        b = np.unpackbits(b, axis=1).astype(np.float32)
+        b = torch.tensor(b)
+
+    if len(a.shape) == 1:
+        a = a.unsqueeze(0)
+
+    if len(b.shape) == 1:
+        b = b.unsqueeze(0)
+
+    return torch.mm(a, b.transpose(0, 1))
+
+dot_score = dot_score_float_binary
+
 # From https://github.com/beir-cellar/beir/blob/f062f038c4bfd19a8ca942a9910b1e0d218759d4/beir/retrieval/custom_metrics.py#L4
 def mrr(
-    qrels: dict[str, dict[str, int]],
-    results: dict[str, dict[str, float]],
-    k_values: List[int],
+        qrels: dict[str, dict[str, int]],
+        results: dict[str, dict[str, float]],
+        k_values: List[int],
 ) -> Tuple[Dict[str, float]]:
     MRR = {}
 
@@ -85,9 +155,9 @@ def mrr(
 
 
 def recall_cap(
-    qrels: dict[str, dict[str, int]],
-    results: dict[str, dict[str, float]],
-    k_values: List[int],
+        qrels: dict[str, dict[str, int]],
+        results: dict[str, dict[str, float]],
+        k_values: List[int],
 ) -> Tuple[Dict[str, float]]:
     capped_recall = {}
 
@@ -99,8 +169,8 @@ def recall_cap(
 
     for query_id, doc_scores in results.items():
         top_hits = sorted(doc_scores.items(), key=lambda item: item[1], reverse=True)[
-            0:k_max
-        ]
+                   0:k_max
+                   ]
         query_relevant_docs = [
             doc_id for doc_id in qrels[query_id] if qrels[query_id][doc_id] > 0
         ]
@@ -119,9 +189,9 @@ def recall_cap(
 
 
 def hole(
-    qrels: dict[str, dict[str, int]],
-    results: dict[str, dict[str, float]],
-    k_values: List[int],
+        qrels: dict[str, dict[str, int]],
+        results: dict[str, dict[str, float]],
+        k_values: List[int],
 ) -> Tuple[Dict[str, float]]:
     Hole = {}
 
@@ -138,8 +208,8 @@ def hole(
 
     for _, scores in results.items():
         top_hits = sorted(scores.items(), key=lambda item: item[1], reverse=True)[
-            0:k_max
-        ]
+                   0:k_max
+                   ]
         for k in k_values:
             hole_docs = [
                 row[0] for row in top_hits[0:k] if row[0] not in annotated_corpus
@@ -154,9 +224,9 @@ def hole(
 
 
 def top_k_accuracy(
-    qrels: dict[str, dict[str, int]],
-    results: dict[str, dict[str, float]],
-    k_values: List[int],
+        qrels: dict[str, dict[str, int]],
+        results: dict[str, dict[str, float]],
+        k_values: List[int],
 ) -> Tuple[Dict[str, float]]:
     top_k_acc = {}
 

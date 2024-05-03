@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 from sentence_transformers.models import Transformer, WordEmbeddings
 
 from .Evaluator import Evaluator
-from .utils import cos_sim, dot_score, hole, mrr, recall_cap, top_k_accuracy
+from .utils import cos_sim, dot_score, dot_score_binary_binary, dot_score_float_binary, hole, mrr, recall_cap, top_k_accuracy
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class DenseRetrievalExactSearch:
         # Create embeddings for all queries using model.encode_queries()
         # Runs semantic search against the corpus embeddings
         # Returns a ranked list with the corpus ids
+        top_k = 100
         if score_function not in self.score_functions:
             raise ValueError(
                 "score function: {} must be either (cos_sim) for cosine similarity or (dot) for dot product".format(
@@ -52,7 +53,7 @@ class DenseRetrievalExactSearch:
                 )
             )
 
-        logger.info("Encoding Queries...")
+        logger.info(f"Searching for top_k {top_k}. Encoding Queries...")
         query_ids = list(queries.keys())
         self.results = {qid: {} for qid in query_ids}
         queries = [queries[qid] for qid in queries]
@@ -61,6 +62,15 @@ class DenseRetrievalExactSearch:
             batch_size=self.batch_size,
             show_progress_bar=self.show_progress_bar,
             convert_to_tensor=self.convert_to_tensor,
+            precision='ubinary'
+        )
+
+        query_float_embeddings = self.model.encode_queries(
+            queries,
+            batch_size=self.batch_size,
+            show_progress_bar=self.show_progress_bar,
+            convert_to_tensor=self.convert_to_tensor,
+            precision='float32'
         )
 
         logger.info("Sorting Corpus by document length (Longest first)...")
@@ -94,13 +104,19 @@ class DenseRetrievalExactSearch:
                 batch_size=self.batch_size,
                 show_progress_bar=self.show_progress_bar,
                 convert_to_tensor=self.convert_to_tensor,
+                precision='ubinary'
             )
 
             # Compute similarites using either cosine-similarity or dot product
-            cos_scores = self.score_functions[score_function](
+            cos_scores = dot_score_binary_binary(
                 query_embeddings, sub_corpus_embeddings
             )
             cos_scores[torch.isnan(cos_scores)] = -1
+
+            cos_float_scores = dot_score_float_binary(
+                query_float_embeddings, sub_corpus_embeddings
+            )
+            cos_float_scores[torch.isnan(cos_scores)] = -1
 
             # Get top-k values
             cos_scores_top_k_values, cos_scores_top_k_idx = torch.topk(
@@ -112,27 +128,41 @@ class DenseRetrievalExactSearch:
             )
             cos_scores_top_k_values = cos_scores_top_k_values.cpu().tolist()
             cos_scores_top_k_idx = cos_scores_top_k_idx.cpu().tolist()
+            # print(f'cos_scores_top_k_values {cos_scores_top_k_values}')
+            # print(f'cos_scores_top_k_idx {cos_scores_top_k_idx[0]}')
+            # Get top-k values of float-binary-comparison
+            cos_float_scores = cos_float_scores.cpu().tolist()
+            # cos_float_scores_top_k_values, cos_float_scores_top_k_idx = torch.topk(
+            #     cos_float_scores,
+            #     min(top_k + 1, len(cos_float_scores[1])),
+            #     dim=1,
+            #     largest=True,
+            #     sorted=False,
+            # )
+            # cos_float_scores_top_k_values = cos_float_scores_top_k_values.cpu().tolist()
+            # cos_float_scores_top_k_idx = cos_float_scores_top_k_idx.cpu().tolist()
 
             for query_itr in range(len(query_embeddings)):
                 query_id = query_ids[query_itr]
                 for sub_corpus_id, score in zip(
                     cos_scores_top_k_idx[query_itr], cos_scores_top_k_values[query_itr]
                 ):
+                    float_score = cos_float_scores[query_itr][sub_corpus_id]
                     corpus_id = corpus_ids[corpus_start_idx + sub_corpus_id]
                     if corpus_id != query_id:
                         if len(result_heaps[query_id]) < top_k:
                             # Push item on the heap
-                            heapq.heappush(result_heaps[query_id], (score, corpus_id))
+                            heapq.heappush(result_heaps[query_id], (score, corpus_id, float_score))
                         else:
                             # If item is larger than the smallest in the heap, push it on the heap then pop the smallest element
                             heapq.heappushpop(
-                                result_heaps[query_id], (score, corpus_id)
+                                result_heaps[query_id], (score, corpus_id, float_score)
                             )
 
+        # Here do reranking with `float`
         for qid in result_heaps:
-            for score, corpus_id in result_heaps[qid]:
-                self.results[qid][corpus_id] = score
-
+            for i, (score, corpus_id, float_score) in enumerate(result_heaps[qid]):
+                self.results[qid][corpus_id] = float_score
         return self.results
 
 
@@ -239,7 +269,7 @@ class RetrievalEvaluator(Evaluator):
     @staticmethod
     def evaluate(
         qrels: dict[str, dict[str, int]],
-        results: dict[str, dict[str, float]],
+        results: dict[str, dict[str, Tuple[float, float]]],
         k_values: List[int],
         ignore_identical_ids: bool = True,
     ) -> Tuple[Dict[str, float], dict[str, float], dict[str, float], dict[str, float]]:
@@ -258,7 +288,7 @@ class RetrievalEvaluator(Evaluator):
         _map = {}
         recall = {}
         precision = {}
-
+        k_values = [10]
         for k in k_values:
             ndcg[f"NDCG@{k}"] = 0.0
             _map[f"MAP@{k}"] = 0.0
